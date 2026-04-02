@@ -1,24 +1,12 @@
 "use client";
 
-import Image from "next/image"
+import styles from './dado.module.css';
 
 export default function Dado({ valor }) {
-    function handleClick(evt){
-    }
+    const faceWidth = 78.58;
+    const backgroundPositionX = - (valor - 1) * faceWidth;
 
     return (
-        <div>
-        <button onClick={handleClick}>
-            {valor}
-        </button>
-            <Image
-                src="/faces.svg"
-                alt="Next.js logo"
-                width={100}
-                height={20}
-                priority
-            />
-        </div>
-      
+        <div className={styles.dado} style={{backgroundPosition: `${backgroundPositionX}px 0px`,}}/>
     );
 }
