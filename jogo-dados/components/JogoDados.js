@@ -56,20 +56,26 @@ export default function JogoDados() {
         setScoreB(sum);
 
         let resultado = `Jogador B rolou ${d1} + ${d2} = ${sum}. `;
+        let novoVencedorA = vencedorA;
+        let novoVencedorB = vencedorB;
+
         if (scoreA > sum) {
-            setvencedorA((prev) => prev + 1);
+            novoVencedorA += 1;
             resultado += 'Jogador A vence a rodada.';
         } else if (scoreA < sum) {
-            setvencedorB((prev) => prev + 1);
+            novoVencedorB += 1;
             resultado += 'Jogador B vence a rodada.';
         } else {
             resultado += 'Empate na rodada.';
         }
 
+        setvencedorA(novoVencedorA);
+        setvencedorB(novoVencedorB);
+
         if (round >= 5) {
             setGameOver(true);
-            const vencedorFinal = vencedorA > vencedorB ? 'Jogador A' : vencedorA < vencedorB ? 'Jogador B' : 'Empate';
-            resultado += ` Jogo encerrado. Resultado final: ${vencedorFinal} (A ${vencedorA} x ${vencedorB} B).`;
+            const vencedorFinal = novoVencedorA > novoVencedorB ? 'Jogador A' : novoVencedorA < novoVencedorB ? 'Jogador B' : 'Empate';
+            resultado += ` Jogo encerrado. Resultado final: ${vencedorFinal} (A ${novoVencedorA} x ${novoVencedorB} B).`;
             setRoundResult(resultado);
             setActivePlayer(null);
             return;
