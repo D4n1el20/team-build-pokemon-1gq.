@@ -1,4 +1,3 @@
--- Create teams table
 CREATE TABLE teams (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -6,7 +5,6 @@ CREATE TABLE teams (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create team_pokemon table
 CREATE TABLE team_pokemon (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
@@ -20,11 +18,9 @@ CREATE TABLE team_pokemon (
   item TEXT
 );
 
--- Enable Row Level Security
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_pokemon ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
 CREATE POLICY "Users can view their own teams" ON teams
   FOR SELECT USING (auth.uid() = user_id);
 

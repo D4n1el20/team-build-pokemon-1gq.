@@ -33,22 +33,18 @@ export default function Builder() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch Pokemon list
         const pokemonRes = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
         const pokemonData = await pokemonRes.json();
         setPokemonList(pokemonData.results);
 
-        // Fetch moves
         const movesRes = await fetch('https://pokeapi.co/api/v2/move?limit=50');
         const movesData = await movesRes.json();
         setMovesList(movesData.results.map(m => m.name));
 
-        // Fetch abilities
         const abilitiesRes = await fetch('https://pokeapi.co/api/v2/ability?limit=50');
         const abilitiesData = await abilitiesRes.json();
         setAbilitiesList(abilitiesData.results.map(a => a.name));
 
-        // Fetch items (held items only)
         const itemsRes = await fetch('https://pokeapi.co/api/v2/item-category/1'); // 1 is held-items
         const itemsData = await itemsRes.json();
         setItemsList(itemsData.items.slice(0, 50).map(i => i.name)); // Limit to 50
@@ -67,10 +63,8 @@ export default function Builder() {
     const getUser = async () => {
       const { data: { user } } = await authService.getCurrentUser();
       setUser(user);
-      // Carregar times sempre, independente de login
       loadSavedTeams();
 
-      // Verificar se há um time carregado do localStorage
       const loadedTeamData = localStorage.getItem('loaded_team');
       if (loadedTeamData) {
         try {
@@ -86,7 +80,6 @@ export default function Builder() {
 
     const { data: authListener } = authService.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      // Recarregar times quando o status de auth mudar
       loadSavedTeams();
     });
 
@@ -100,7 +93,6 @@ export default function Builder() {
     const pokemonInSlot = team[index];
 
     if (pokemonInSlot) {
-      // Se há Pokémon no slot, carregar suas informações para edição
       setSelectedPokemon(pokemonInSlot);
       setMoves(pokemonInSlot.moves || []);
       setAbility(pokemonInSlot.ability || '');
@@ -109,7 +101,6 @@ export default function Builder() {
       setIvs(pokemonInSlot.ivs || { hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 });
       setEvs(pokemonInSlot.evs || { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 });
     } else {
-      // Se o slot está vazio, limpar tudo e mostrar busca
       setSelectedPokemon(null);
       setMoves([]);
       setAbility('');
@@ -197,7 +188,6 @@ export default function Builder() {
   const handleChangePokemon = () => {
     setSelectedPokemon(null);
     setSearchTerm('');
-    // Limpar os campos de edição quando voltar para busca
     setMoves([]);
     setAbility('');
     setItem('');
@@ -247,16 +237,14 @@ export default function Builder() {
       for (let i = 0; i < savedTeam.team_pokemon.length && i < 6; i++) {
         const tp = savedTeam.team_pokemon[i];
 
-        // Usar dados salvos diretamente
         loadedTeam[i] = {
           id: tp.pokemon_id,
           name: tp.name,
           types: tp.types || [],
           stats: tp.base_stats,
           image: tp.image_url,
-          abilities: [], // Não necessário para edição
-          moves: [], // Não necessário para edição
-          // Dados salvos
+          abilities: [],
+          moves: [],
           nickname: tp.nickname,
           level: tp.level,
           ivs: tp.ivs,
@@ -283,7 +271,6 @@ export default function Builder() {
       for (let i = 0; i < savedTeam.team_pokemon.length && i < 6; i++) {
         const tp = savedTeam.team_pokemon[i];
 
-        // Usar dados salvos no banco se disponíveis, senão buscar da API
         if (tp.name && tp.base_stats && tp.image_url) {
           loadedTeam[i] = {
             id: tp.pokemon_id,
@@ -291,8 +278,8 @@ export default function Builder() {
             types: tp.types || [],
             stats: tp.base_stats,
             image: tp.image_url,
-            abilities: [], // Não salvo, buscar se necessário
-            moves: [], // Não salvo, buscar se necessário
+            abilities: [],
+            moves: [],
             // Dados salvos
             nickname: tp.nickname,
             level: tp.level,
@@ -303,7 +290,6 @@ export default function Builder() {
             item: tp.item
           };
         } else {
-          // Fallback: buscar da API
           try {
             const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${tp.pokemon_id}`);
             const data = await res.json();
@@ -448,7 +434,6 @@ export default function Builder() {
       <div className={styles.analysisSection}>
         <h2>Análise do Time</h2>
         <p>Total de Pokémon: {team.filter(p => p).length}</p>
-        {/* Placeholder for more analysis */}
       </div>
 
       {savedTeams.length > 0 && (

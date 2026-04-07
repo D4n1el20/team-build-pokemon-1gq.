@@ -1,8 +1,6 @@
--- Add anonymous_id field to teams table for anonymous users
 ALTER TABLE teams
 ADD COLUMN anonymous_id TEXT;
 
--- Create a function to get user teams (authenticated or anonymous)
 CREATE OR REPLACE FUNCTION get_user_teams(user_uuid UUID DEFAULT NULL, anon_id TEXT DEFAULT NULL)
 RETURNS TABLE (
   id UUID,
@@ -46,5 +44,4 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Allow public access to the function
 GRANT EXECUTE ON FUNCTION get_user_teams(UUID, TEXT) TO authenticated, anon;

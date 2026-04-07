@@ -30,9 +30,7 @@ export default function Teams() {
 
   const handleLoadTeam = async (team) => {
     try {
-      // Salvar o time no localStorage para ser carregado no builder
       localStorage.setItem('loaded_team', JSON.stringify(team));
-      // Redirecionar para o builder
       router.push('/builder');
     } catch (error) {
       console.error('Error loading team:', error);
