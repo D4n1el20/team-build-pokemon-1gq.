@@ -18,6 +18,9 @@
 /out/
 
 # production
+
+# environment variables
+.env.local
 /build
 
 # misc
