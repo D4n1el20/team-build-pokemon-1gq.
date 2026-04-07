@@ -1,0 +1,285 @@
+.container {
+  padding: 20px;
+  display: flex;
+  gap: 20px;
+  min-height: 100vh;
+}
+
+.teamSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title {
+  margin-bottom: 20px;
+  color: var(--foreground);
+}
+
+.teamSlots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.slot {
+  width: 100px;
+  height: 100px;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: var(--accent);
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.slot:hover {
+  background-color: var(--hover);
+}
+
+.slotFilled {
+  background-color: var(--primary);
+}
+
+.slotImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 5px;
+}
+
+.selectionSection {
+  flex: 2;
+  padding: 20px;
+  background-color: var(--accent);
+  border-radius: 10px;
+  overflow-y: auto;
+  max-height: 90vh;
+}
+
+.searchSection {
+  margin-bottom: 20px;
+}
+
+.searchInput {
+  padding: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.pokemonList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.pokemonItem {
+  padding: 10px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  background-color: var(--background);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.pokemonItem:hover {
+  background-color: var(--hover);
+}
+
+.pokemonItemSelected {
+  background-color: var(--primary);
+  color: white;
+}
+
+.pokemonImage {
+  width: 50px;
+  height: 50px;
+  border-radius: 5px;
+}
+
+.pokemonDetails {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: var(--background);
+  border-radius: 10px;
+}
+
+.pokemonDetailsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.changeButton {
+  padding: 10px 15px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.changeButton:hover {
+  background-color: #0056b3;
+}
+
+.deleteButton {
+  padding: 10px 15px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.deleteButton:hover {
+  background-color: #c82333;
+}
+
+.pokemonImageLarge {
+  width: 100px;
+  height: 100px;
+  border-radius: 5px;
+}
+
+.movesSection {
+  margin-top: 10px;
+}
+
+.moveSelect {
+  margin-right: 10px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background-color: var(--accent);
+  color: var(--foreground);
+}
+
+.abilitySection {
+  margin-top: 10px;
+}
+
+.itemSection {
+  margin-top: 10px;
+}
+
+.levelSection {
+  margin-top: 10px;
+}
+
+.input {
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background-color: var(--accent);
+  color: var(--foreground);
+  width: 60px;
+}
+
+.ivsSection, .evsSection {
+  margin-top: 10px;
+}
+
+.ivsSection div, .evsSection div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.analysisSection {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: var(--accent);
+  border-radius: 10px;
+}
+
+.saveSection {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.teamNameInput {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background-color: var(--accent);
+  color: var(--foreground);
+  flex: 1;
+}
+
+.saveButton {
+  padding: 10px 15px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.saveButton:hover {
+  background-color: #0056b3;
+}
+
+.savedTeamsSection {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: var(--accent);
+  border-radius: 10px;
+}
+
+.savedTeamsList {
+  list-style: none;
+  padding: 0;
+}
+
+.savedTeamItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  margin-bottom: 10px;
+  background-color: var(--background);
+}
+
+.loadButton {
+  padding: 5px 10px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.loadButton:hover {
+  background-color: #0056b3;
+}
