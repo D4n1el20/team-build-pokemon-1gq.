@@ -163,7 +163,6 @@ export default function Teams() {
 
         {savedTeams.length === 0 ? (
           <div className={styles.emptyState}>
-            <span className={styles.emptyIcon} aria-hidden="true">{"\u26A1"}</span>
             <p className={styles.emptyTitle}>Seu espaco de times esta vazio</p>
             <p className={styles.emptyText}>
               Monte seu primeiro time e volte aqui para acompanhar tudo em um painel completo.
