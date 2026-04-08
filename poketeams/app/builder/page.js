@@ -31,6 +31,7 @@ export default function Builder() {
   const [user, setUser] = useState(null);
   const [teamName, setTeamName] = useState('Meu Time');
   const [savedTeams, setSavedTeams] = useState([]);
+  const [editingTeamId, setEditingTeamId] = useState(null);
   const router = useRouter();
 
   async function loadSavedTeams() {
@@ -69,6 +70,7 @@ export default function Builder() {
 
       setTeam(loadedTeam);
       setTeamName(savedTeam.name);
+      setEditingTeamId(savedTeam.id);
       alert('Time carregado com sucesso para edicao!');
     } catch (error) {
       console.error('Error loading team from data:', error);
@@ -274,6 +276,21 @@ export default function Builder() {
     setEvs({ hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 });
   };
 
+  const handleNewTeam = () => {
+    setTeam(Array(6).fill(null));
+    setSelectedSlot(null);
+    setSearchTerm('');
+    setSelectedPokemon(null);
+    setMoves([]);
+    setAbility('');
+    setItem('');
+    setLevel(50);
+    setIvs({ hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 });
+    setEvs({ hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 });
+    setTeamName('Meu Time');
+    setEditingTeamId(null);
+  };
+
 
   const saveTeam = async () => {
     if (!user) {
@@ -296,8 +313,16 @@ export default function Builder() {
         stats: p.stats,
         image: p.image
       }));
-      await teamService.createTeam(teamName, pokemonList);
-      alert('Time salvo com sucesso!');
+
+      if (editingTeamId !== null) {
+        await teamService.updateTeam(editingTeamId, teamName, pokemonList);
+        alert('Time atualizado com sucesso!');
+      } else {
+        const createdTeam = await teamService.createTeam(teamName, pokemonList);
+        setEditingTeamId(createdTeam.id);
+        alert('Time criado com sucesso!');
+      }
+
       await loadSavedTeams();
     } catch (error) {
       console.error('Error saving team:', error);
@@ -380,6 +405,7 @@ export default function Builder() {
 
       setTeam(loadedTeam);
       setTeamName(savedTeam.name);
+      setEditingTeamId(savedTeam.id);
       alert('Time carregado com sucesso!');
     } catch (error) {
       console.error('Error loading team:', error);
@@ -418,6 +444,7 @@ export default function Builder() {
 
       <section className={`${styles.panel} ${styles.teamSection}`}>
         <h1 className={styles.title}>Construtor de Times</h1>
+        <p className={styles.editingStatus}>{editingTeamId !== null ? `Editando: ${teamName}` : 'Novo Time'}</p>
         <div className={styles.saveSection}>
           <input
             type="text"
@@ -427,6 +454,7 @@ export default function Builder() {
             className={styles.teamNameInput}
           />
           <button onClick={saveTeam} className={`${styles.button} ${styles.primaryButton} ${styles.saveButton}`}>Salvar Time</button>
+          <button onClick={handleNewTeam} className={`${styles.button} ${styles.secondaryButton}`}>Novo Time</button>
         </div>
 
         <div className={styles.teamSlots}>

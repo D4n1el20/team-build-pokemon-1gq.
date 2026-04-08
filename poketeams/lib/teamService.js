@@ -105,6 +105,7 @@ export const teamService = {
   async updateTeam(teamId, teamName, pokemonList) {
     const user = await getRequiredUser()
 
+    // 1) Update the team name
     const { data: updatedTeam, error: teamError } = await supabase
       .from('teams')
       .update({ name: teamName })
@@ -115,6 +116,7 @@ export const teamService = {
 
     if (teamError) throw teamError
 
+    // 2) Remove old pokemon from this team
     const { error: deleteError } = await supabase
       .from('team_pokemon')
       .delete()
@@ -122,6 +124,7 @@ export const teamService = {
 
     if (deleteError) throw deleteError
 
+    // 3) Insert the updated pokemon list
     const pokemonInserts = pokemonList.map((pokemon) => mapPokemonInsert(teamId, pokemon))
 
     if (pokemonInserts.length > 0) {
