@@ -27,10 +27,12 @@ const MODE_CONFIG = {
 };
 
 const MIN_PASSWORD_LENGTH = 6;
+const MIN_DISPLAY_NAME_LENGTH = 3;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getFieldError(field, value, formData, mode) {
   const trimmedEmail = formData.email.trim();
+  const trimmedUsername = formData.username.trim();
 
   if (field === 'email') {
     if (!trimmedEmail) return 'Informe seu email.';
@@ -46,6 +48,14 @@ function getFieldError(field, value, formData, mode) {
     return '';
   }
 
+  if (field === 'username' && mode === MODE.SIGNUP) {
+    if (!trimmedUsername) return '';
+    if (trimmedUsername.length < MIN_DISPLAY_NAME_LENGTH) {
+      return `O nome de usuario deve ter no minimo ${MIN_DISPLAY_NAME_LENGTH} caracteres.`;
+    }
+    return '';
+  }
+
   if (field === 'confirmPassword' && mode === MODE.SIGNUP) {
     if (!value) return 'Confirme sua senha.';
     if (value !== formData.password) return 'As senhas nao coincidem.';
@@ -57,7 +67,7 @@ function getFieldError(field, value, formData, mode) {
 
 function validateForm(formData, mode) {
   const fields = ['email', 'password'];
-  if (mode === MODE.SIGNUP) fields.push('confirmPassword');
+  if (mode === MODE.SIGNUP) fields.push('username', 'confirmPassword');
 
   return fields.reduce((acc, field) => {
     const message = getFieldError(field, formData[field], formData, mode);
@@ -77,6 +87,7 @@ function AuthField({
   autoComplete,
   error,
   showState,
+  required = true,
 }) {
   const fieldStatusClass = showState
     ? error
@@ -100,7 +111,7 @@ function AuthField({
         autoComplete={autoComplete}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        required
+        required={required}
       />
       {showState && error && (
         <p id={`${id}-error`} className={styles.fieldError} role="alert">
@@ -113,7 +124,7 @@ function AuthField({
 
 export default function Auth() {
   const [mode, setMode] = useState(MODE.LOGIN);
-  const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [fieldErrors, setFieldErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -123,7 +134,7 @@ export default function Auth() {
   const router = useRouter();
 
   const { title, submitLabel, loadingLabel, switchLabel, action } = MODE_CONFIG[mode];
-  const { email, password, confirmPassword } = formData;
+  const { username, email, password, confirmPassword } = formData;
   const isSignup = mode === MODE.SIGNUP;
 
   const shouldShowFieldError = (field) => submitAttempted || touched[field];
@@ -218,7 +229,7 @@ export default function Auth() {
     setError('');
 
     try {
-      await action(email.trim(), password);
+      await action(email.trim(), password, username.trim());
       router.push('/builder');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nao foi possivel autenticar. Tente novamente.');
@@ -243,6 +254,22 @@ export default function Auth() {
         <h1 className={styles.title}>{title}</h1>
 
         <form onSubmit={handleSubmit} className={styles.form}>
+          {isSignup && (
+            <AuthField
+              id="username"
+              label="Nome de usuario"
+              type="text"
+              value={username}
+              onChange={handleInputChange('username')}
+              onBlur={handleBlur('username')}
+              disabled={loading}
+              autoComplete="nickname"
+              error={getVisibleFieldError('username')}
+              showState={shouldShowFieldError('username')}
+              required={false}
+            />
+          )}
+
           <AuthField
             id="email"
             label="Email"
