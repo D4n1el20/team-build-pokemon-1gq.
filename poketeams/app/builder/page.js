@@ -9,6 +9,53 @@ import { teamService } from '../../lib/teamService';
 import { authService } from '../../lib/authService';
 import BackToHome from '../components/BackToHome';
 
+const DEFAULT_IVS = {
+  hp: 31,
+  attack: 31,
+  defense: 31,
+  specialAttack: 31,
+  specialDefense: 31,
+  speed: 31
+};
+
+const DEFAULT_EVS = {
+  hp: 0,
+  attack: 0,
+  defense: 0,
+  specialAttack: 0,
+  specialDefense: 0,
+  speed: 0
+};
+
+const LEGACY_STAT_KEYS = {
+  atk: 'attack',
+  def: 'defense',
+  spa: 'specialAttack',
+  spd: 'specialDefense',
+  spe: 'speed'
+};
+
+function normalizeStatSpread(spread, defaults) {
+  const normalized = { ...defaults };
+
+  if (!spread || typeof spread !== 'object') {
+    return normalized;
+  }
+
+  Object.entries(spread).forEach(([rawKey, rawValue]) => {
+    const key = LEGACY_STAT_KEYS[rawKey] || rawKey;
+
+    if (!(key in normalized)) return;
+
+    const numericValue = Number(rawValue);
+    if (Number.isFinite(numericValue)) {
+      normalized[key] = numericValue;
+    }
+  });
+
+  return normalized;
+}
+
 export default function Builder() {
   const [team, setTeam] = useState(Array(6).fill(null));
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -18,8 +65,8 @@ export default function Builder() {
   const [ability, setAbility] = useState('');
   const [item, setItem] = useState('');
   const [level, setLevel] = useState(50);
-  const [ivs, setIvs] = useState({ hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 });
-  const [evs, setEvs] = useState({ hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 });
+  const [ivs, setIvs] = useState({ ...DEFAULT_IVS });
+  const [evs, setEvs] = useState({ ...DEFAULT_EVS });
 
   const [pokemonList, setPokemonList] = useState([]);
   const [movesList, setMovesList] = useState([]);
@@ -49,26 +96,39 @@ export default function Builder() {
 
       for (let i = 0; i < savedTeam.team_pokemon.length && i < 6; i++) {
         const tp = savedTeam.team_pokemon[i];
+        const savedMoves = Array.isArray(tp.moves) ? [...tp.moves] : [];
+        const normalizedIvs = normalizeStatSpread(tp.ivs, DEFAULT_IVS);
+        const normalizedEvs = normalizeStatSpread(tp.evs, DEFAULT_EVS);
 
         loadedTeam[i] = {
           id: tp.pokemon_id,
           name: tp.name,
-          types: tp.types || [],
-          stats: tp.base_stats,
+          types: Array.isArray(tp.types) ? [...tp.types] : [],
+          stats: tp.base_stats ? { ...tp.base_stats } : null,
           image: tp.image_url,
-          abilities: [],
-          moves: [],
-          nickname: tp.nickname,
-          level: tp.level,
-          ivs: tp.ivs,
-          evs: tp.evs,
-          moves: tp.moves,
-          ability: tp.ability,
-          item: tp.item
+          abilities: tp.ability ? [tp.ability] : [],
+          availableAbilities: tp.ability ? [tp.ability] : [],
+          availableMoves: [...savedMoves],
+          moves: [...savedMoves],
+          nickname: tp.nickname ?? null,
+          level: Number.isFinite(Number(tp.level)) ? Number(tp.level) : 50,
+          ivs: normalizedIvs,
+          evs: normalizedEvs,
+          ability: tp.ability || '',
+          item: tp.item || ''
         };
       }
 
-      setTeam(loadedTeam);
+      setTeam([...loadedTeam]);
+      setSelectedSlot(null);
+      setSelectedPokemon(null);
+      setSearchTerm('');
+      setMoves([]);
+      setAbility('');
+      setItem('');
+      setLevel(50);
+      setIvs({ ...DEFAULT_IVS });
+      setEvs({ ...DEFAULT_EVS });
       setTeamName(savedTeam.name);
       setEditingTeamId(savedTeam.id);
       alert('Time carregado com sucesso para edicao!');
@@ -168,26 +228,62 @@ export default function Builder() {
     loadInitialState();
   }, [authLoading, user]);
 
+  const handlePokemonChange = (index, field, value) => {
+    if (index === null || index < 0) return;
+
+    setTeam((prev) => {
+      if (!prev[index]) return prev;
+
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: value
+      };
+
+      return updated;
+    });
+  };
+
   const handleSlotClick = (index) => {
     setSelectedSlot(index);
     const pokemonInSlot = team[index];
 
     if (pokemonInSlot) {
-      setSelectedPokemon(pokemonInSlot);
-      setMoves(pokemonInSlot.moves || []);
+      const normalizedIvs = normalizeStatSpread(pokemonInSlot.ivs, DEFAULT_IVS);
+      const normalizedEvs = normalizeStatSpread(pokemonInSlot.evs, DEFAULT_EVS);
+      const selectedMoves = Array.isArray(pokemonInSlot.moves) ? [...pokemonInSlot.moves] : [];
+      const availableMoves = Array.isArray(pokemonInSlot.availableMoves)
+        ? [...pokemonInSlot.availableMoves]
+        : [...selectedMoves];
+      const availableAbilities = Array.isArray(pokemonInSlot.availableAbilities)
+        ? [...pokemonInSlot.availableAbilities]
+        : Array.isArray(pokemonInSlot.abilities)
+          ? [...pokemonInSlot.abilities]
+          : (pokemonInSlot.ability ? [pokemonInSlot.ability] : []);
+
+      setSelectedPokemon({
+        ...pokemonInSlot,
+        types: Array.isArray(pokemonInSlot.types) ? [...pokemonInSlot.types] : [],
+        stats: pokemonInSlot.stats ? { ...pokemonInSlot.stats } : null,
+        moves: availableMoves,
+        availableMoves,
+        abilities: availableAbilities,
+        availableAbilities
+      });
+      setMoves(selectedMoves);
       setAbility(pokemonInSlot.ability || '');
       setItem(pokemonInSlot.item || '');
-      setLevel(pokemonInSlot.level || 50);
-      setIvs(pokemonInSlot.ivs || { hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 });
-      setEvs(pokemonInSlot.evs || { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 });
+      setLevel(Number.isFinite(Number(pokemonInSlot.level)) ? Number(pokemonInSlot.level) : 50);
+      setIvs(normalizedIvs);
+      setEvs(normalizedEvs);
     } else {
       setSelectedPokemon(null);
       setMoves([]);
       setAbility('');
       setItem('');
       setLevel(50);
-      setIvs({ hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 });
-      setEvs({ hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 });
+      setIvs({ ...DEFAULT_IVS });
+      setEvs({ ...DEFAULT_EVS });
     }
   };
 
@@ -195,6 +291,11 @@ export default function Builder() {
     try {
       const res = await fetch(pokemon.url);
       const data = await res.json();
+      const defaultLevel = 50;
+      const defaultIvs = { ...DEFAULT_IVS };
+      const defaultEvs = { ...DEFAULT_EVS };
+      const availableMoves = data.moves.slice(0, 20).map(m => m.move.name);
+      const availableAbilities = data.abilities.map(a => a.ability.name);
       const pokemonDetails = {
         id: data.id,
         name: data.name,
@@ -208,14 +309,27 @@ export default function Builder() {
           speed: data.stats.find(s => s.stat.name === 'speed').base_stat,
         },
         image: data.sprites.front_default,
-        abilities: data.abilities.map(a => a.ability.name),
-        moves: data.moves.slice(0, 20).map(m => m.move.name), // Limit to first 20 moves
+        abilities: availableAbilities,
+        availableAbilities,
+        moves: availableMoves, // Limit to first 20 moves
+        availableMoves,
       };
       setSelectedPokemon(pokemonDetails);
       setMoves([]);
       setAbility('');
       setItem('');
-      setTeam(prev => prev.map((p, i) => i === selectedSlot ? { ...pokemonDetails, moves: [], ability: '', item: '' } : p));
+      setLevel(defaultLevel);
+      setIvs(defaultIvs);
+      setEvs(defaultEvs);
+      setTeam(prev => prev.map((p, i) => i === selectedSlot ? {
+        ...pokemonDetails,
+        moves: [],
+        ability: '',
+        item: '',
+        level: defaultLevel,
+        ivs: defaultIvs,
+        evs: defaultEvs
+      } : p));
     } catch (error) {
       console.error('Error fetching Pokemon details:', error);
     }
@@ -225,32 +339,58 @@ export default function Builder() {
     const newMoves = [...moves];
     newMoves[index] = move;
     setMoves(newMoves);
-    setTeam(prev => prev.map((p, i) => i === selectedSlot ? { ...p, moves: newMoves } : p));
+    handlePokemonChange(selectedSlot, 'moves', [...newMoves]);
   };
 
   const handleAbilityChange = (ability) => {
     setAbility(ability);
-    setTeam(prev => prev.map((p, i) => i === selectedSlot ? { ...p, ability } : p));
+    handlePokemonChange(selectedSlot, 'ability', ability);
   };
 
   const handleItemChange = (item) => {
     setItem(item);
-    setTeam(prev => prev.map((p, i) => i === selectedSlot ? { ...p, item } : p));
+    handlePokemonChange(selectedSlot, 'item', item);
   };
 
   const handleLevelChange = (newLevel) => {
-    setLevel(Math.max(1, Math.min(100, newLevel)));
+    const parsedLevel = Number(newLevel);
+    if (!Number.isFinite(parsedLevel)) return;
+
+    const normalizedLevel = Math.max(1, Math.min(100, parsedLevel));
+    setLevel(normalizedLevel);
+    handlePokemonChange(selectedSlot, 'level', normalizedLevel);
   };
 
   const handleIvChange = (stat, value) => {
-    setIvs(prev => ({ ...prev, [stat]: Math.max(0, Math.min(31, value)) }));
+    const normalizedStat = LEGACY_STAT_KEYS[stat] || stat;
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return;
+
+    const normalizedValue = Math.max(0, Math.min(31, numericValue));
+    const nextIvs = {
+      ...ivs,
+      [normalizedStat]: normalizedValue
+    };
+
+    setIvs(nextIvs);
+    handlePokemonChange(selectedSlot, 'ivs', nextIvs);
   };
 
   const handleEvChange = (stat, value) => {
-    const newValue = Math.max(0, Math.min(255, value));
-    const totalEvs = Object.values(evs).reduce((sum, ev) => sum + ev, 0) - evs[stat] + newValue;
+    const normalizedStat = LEGACY_STAT_KEYS[stat] || stat;
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return;
+
+    const newValue = Math.max(0, Math.min(255, numericValue));
+    const nextEvs = {
+      ...evs,
+      [normalizedStat]: newValue
+    };
+    const totalEvs = Object.values(nextEvs).reduce((sum, ev) => sum + ev, 0);
+
     if (totalEvs <= 510) {
-      setEvs(prev => ({ ...prev, [stat]: newValue }));
+      setEvs(nextEvs);
+      handlePokemonChange(selectedSlot, 'evs', nextEvs);
     }
   };
 
@@ -261,8 +401,8 @@ export default function Builder() {
     setAbility('');
     setItem('');
     setLevel(50);
-    setIvs({ hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 });
-    setEvs({ hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 });
+    setIvs({ ...DEFAULT_IVS });
+    setEvs({ ...DEFAULT_EVS });
   };
 
   const handleChangePokemon = () => {
@@ -272,8 +412,8 @@ export default function Builder() {
     setAbility('');
     setItem('');
     setLevel(50);
-    setIvs({ hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 });
-    setEvs({ hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 });
+    setIvs({ ...DEFAULT_IVS });
+    setEvs({ ...DEFAULT_EVS });
   };
 
   const handleNewTeam = () => {
@@ -285,8 +425,8 @@ export default function Builder() {
     setAbility('');
     setItem('');
     setLevel(50);
-    setIvs({ hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 });
-    setEvs({ hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 });
+    setIvs({ ...DEFAULT_IVS });
+    setEvs({ ...DEFAULT_EVS });
     setTeamName('Meu Time');
     setEditingTeamId(null);
   };
@@ -302,15 +442,15 @@ export default function Builder() {
       const pokemonList = team.filter(p => p).map(p => ({
         id: p.id,
         nickname: p.nickname,
-        level: p.level,
-        ivs: p.ivs,
-        evs: p.evs,
-        moves: p.moves,
+        level: Number.isFinite(Number(p.level)) ? Number(p.level) : 50,
+        ivs: normalizeStatSpread(p.ivs, DEFAULT_IVS),
+        evs: normalizeStatSpread(p.evs, DEFAULT_EVS),
+        moves: Array.isArray(p.moves) ? [...p.moves] : [],
         ability: p.ability,
         item: p.item,
         name: p.name,
-        types: p.types,
-        stats: p.stats,
+        types: Array.isArray(p.types) ? [...p.types] : [],
+        stats: p.stats ? { ...p.stats } : null,
         image: p.image
       }));
 
@@ -337,29 +477,37 @@ export default function Builder() {
 
       for (let i = 0; i < savedTeam.team_pokemon.length && i < 6; i++) {
         const tp = savedTeam.team_pokemon[i];
+        const savedMoves = Array.isArray(tp.moves) ? [...tp.moves] : [];
+        const normalizedIvs = normalizeStatSpread(tp.ivs, DEFAULT_IVS);
+        const normalizedEvs = normalizeStatSpread(tp.evs, DEFAULT_EVS);
+        const normalizedLevel = Number.isFinite(Number(tp.level)) ? Number(tp.level) : 50;
+        const savedAbility = tp.ability || '';
 
         if (tp.name && tp.base_stats && tp.image_url) {
           loadedTeam[i] = {
             id: tp.pokemon_id,
             name: tp.name,
-            types: tp.types || [],
-            stats: tp.base_stats,
+            types: Array.isArray(tp.types) ? [...tp.types] : [],
+            stats: { ...tp.base_stats },
             image: tp.image_url,
-            abilities: [],
-            moves: [],
+            abilities: savedAbility ? [savedAbility] : [],
+            availableAbilities: savedAbility ? [savedAbility] : [],
+            availableMoves: [...savedMoves],
             // Dados salvos
-            nickname: tp.nickname,
-            level: tp.level,
-            ivs: tp.ivs,
-            evs: tp.evs,
-            moves: tp.moves,
-            ability: tp.ability,
-            item: tp.item
+            nickname: tp.nickname ?? null,
+            level: normalizedLevel,
+            ivs: normalizedIvs,
+            evs: normalizedEvs,
+            moves: [...savedMoves],
+            ability: savedAbility,
+            item: tp.item || ''
           };
         } else {
           try {
             const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${tp.pokemon_id}`);
             const data = await res.json();
+            const fetchedAbilities = data.abilities.map(a => a.ability.name);
+            const fetchedMoves = data.moves.slice(0, 20).map(m => m.move.name);
 
             loadedTeam[i] = {
               id: data.id,
@@ -374,16 +522,17 @@ export default function Builder() {
                 speed: data.stats.find(s => s.stat.name === 'speed').base_stat,
               },
               image: data.sprites.front_default,
-              abilities: data.abilities.map(a => a.ability.name),
-              moves: data.moves.slice(0, 20).map(m => m.move.name),
+              abilities: fetchedAbilities,
+              availableAbilities: fetchedAbilities,
+              availableMoves: fetchedMoves,
               // Dados salvos
-              nickname: tp.nickname,
-              level: tp.level,
-              ivs: tp.ivs,
-              evs: tp.evs,
-              moves: tp.moves,
-              ability: tp.ability,
-              item: tp.item
+              nickname: tp.nickname ?? null,
+              level: normalizedLevel,
+              ivs: normalizedIvs,
+              evs: normalizedEvs,
+              moves: [...savedMoves],
+              ability: savedAbility,
+              item: tp.item || ''
             };
           } catch (error) {
             console.error(`Error loading Pokemon ${tp.pokemon_id}:`, error);
@@ -391,19 +540,34 @@ export default function Builder() {
             loadedTeam[i] = {
               id: tp.pokemon_id,
               name: `Pokemon ${tp.pokemon_id}`,
-              nickname: tp.nickname,
-              level: tp.level,
-              ivs: tp.ivs,
-              evs: tp.evs,
-              moves: tp.moves,
-              ability: tp.ability,
-              item: tp.item
+              types: [],
+              stats: null,
+              image: null,
+              abilities: savedAbility ? [savedAbility] : [],
+              availableAbilities: savedAbility ? [savedAbility] : [],
+              availableMoves: [...savedMoves],
+              nickname: tp.nickname ?? null,
+              level: normalizedLevel,
+              ivs: normalizedIvs,
+              evs: normalizedEvs,
+              moves: [...savedMoves],
+              ability: savedAbility,
+              item: tp.item || ''
             };
           }
         }
       }
 
-      setTeam(loadedTeam);
+      setTeam([...loadedTeam]);
+      setSelectedSlot(null);
+      setSelectedPokemon(null);
+      setSearchTerm('');
+      setMoves([]);
+      setAbility('');
+      setItem('');
+      setLevel(50);
+      setIvs({ ...DEFAULT_IVS });
+      setEvs({ ...DEFAULT_EVS });
       setTeamName(savedTeam.name);
       setEditingTeamId(savedTeam.id);
       alert('Time carregado com sucesso!');
@@ -414,6 +578,8 @@ export default function Builder() {
   };
 
   const calculateEffectiveStats = (baseStats) => {
+    if (!baseStats || typeof baseStats !== 'object') return {};
+
     const effective = {};
     for (const stat in baseStats) {
       const base = baseStats[stat];

@@ -36,13 +36,16 @@ export default function PokemonDetails({
 
   const effective = calculateEffectiveStats(selectedPokemon.stats);
   const totalEvs = Object.values(evs).reduce((sum, ev) => sum + ev, 0);
+  const moveOptions = selectedPokemon.availableMoves ?? selectedPokemon.moves ?? [];
+  const abilityOptions = selectedPokemon.availableAbilities ?? selectedPokemon.abilities ?? [];
+  const pokemonTypes = Array.isArray(selectedPokemon.types) ? selectedPokemon.types : [];
 
   return (
     <div className={styles.pokemonDetails}>
       <div className={`${styles.sectionHeader} ${styles.pokemonDetailsHeader}`}>
         <div className={styles.pokemonIdentity}>
           <h3 className={styles.pokemonTitle}>{selectedPokemon.name}</h3>
-          <p className={styles.pokemonTypes}>Tipos: <span>{selectedPokemon.types.join(', ')}</span></p>
+          <p className={styles.pokemonTypes}>Tipos: <span>{pokemonTypes.join(', ')}</span></p>
         </div>
         <div className={styles.buttonGroup}>
           <button onClick={onChangePokemon} className={`${styles.button} ${styles.secondaryButton} ${styles.changeButton}`}>Trocar Pokemon</button>
@@ -80,9 +83,9 @@ export default function PokemonDetails({
           <h4>Golpes</h4>
           <div className={styles.movesGrid}>
             {Array(4).fill().map((_, i) => (
-              <select key={i} value={moves[i] || ''} onChange={(e) => onMoveChange(i, e.target.value)} className={styles.control}>
+              <select key={i} value={moves[i] ?? ''} onChange={(e) => onMoveChange(i, e.target.value)} className={styles.control}>
                 <option value="">Selecionar</option>
-                {selectedPokemon.moves.map(move => <option key={move} value={move}>{move}</option>)}
+                {moveOptions.map(move => <option key={move} value={move}>{move}</option>)}
               </select>
             ))}
           </div>
@@ -92,7 +95,7 @@ export default function PokemonDetails({
           <h4>Habilidade</h4>
           <select value={ability} onChange={(e) => onAbilityChange(e.target.value)} className={styles.control}>
             <option value="">Selecionar</option>
-            {selectedPokemon.abilities.map(abil => <option key={abil} value={abil}>{abil}</option>)}
+            {abilityOptions.map(abil => <option key={abil} value={abil}>{abil}</option>)}
           </select>
         </div>
 
@@ -108,8 +111,8 @@ export default function PokemonDetails({
           <h4>Nivel</h4>
           <input
             type="number"
-            value={level}
-            onChange={(e) => onLevelChange(parseInt(e.target.value) || 50)}
+            value={level ?? ''}
+            onChange={(e) => onLevelChange(e.target.value)}
             min="1"
             max="100"
             className={styles.input}
@@ -124,8 +127,8 @@ export default function PokemonDetails({
                 <label className={styles.statInputLabel}>{getStatLabel(stat)}</label>
                 <input
                   type="number"
-                  value={ivs[stat]}
-                  onChange={(e) => onIvChange(stat, parseInt(e.target.value) || 0)}
+                  value={ivs[stat] ?? ''}
+                  onChange={(e) => onIvChange(stat, e.target.value)}
                   min="0"
                   max="31"
                   className={styles.input}
@@ -143,8 +146,8 @@ export default function PokemonDetails({
                 <label className={styles.statInputLabel}>{getStatLabel(stat)}</label>
                 <input
                   type="number"
-                  value={evs[stat]}
-                  onChange={(e) => onEvChange(stat, parseInt(e.target.value) || 0)}
+                  value={evs[stat] ?? ''}
+                  onChange={(e) => onEvChange(stat, e.target.value)}
                   min="0"
                   max="255"
                   className={styles.input}
