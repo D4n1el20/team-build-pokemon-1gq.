@@ -18,19 +18,27 @@ export default function Teams() {
     let isMounted = true;
 
     const validateAuth = async () => {
-      const {
-        data: { user }
-      } = await authService.getCurrentUser();
+      try {
+        const {
+          data: { user }
+        } = await authService.getCurrentUser();
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      if (!user) {
+        if (!user) {
+          setAuthLoading(false);
+          router.replace('/auth');
+          return;
+        }
+
+        setAuthLoading(false);
+        loadSavedTeams();
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('Error validating auth:', error);
+        setAuthLoading(false);
         router.replace('/auth');
-        return;
       }
-
-      setAuthLoading(false);
-      loadSavedTeams();
     };
 
     validateAuth();
@@ -39,10 +47,12 @@ export default function Teams() {
       if (!isMounted) return;
 
       if (!session?.user) {
+        setAuthLoading(false);
         router.replace('/auth');
         return;
       }
 
+      setAuthLoading(false);
       loadSavedTeams();
     });
 

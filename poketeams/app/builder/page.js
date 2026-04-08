@@ -80,19 +80,26 @@ export default function Builder() {
     let isMounted = true;
 
     const validateAuth = async () => {
-      const {
-        data: { user }
-      } = await authService.getCurrentUser();
+      try {
+        const {
+          data: { user: currentUser }
+        } = await authService.getCurrentUser();
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      if (!user) {
+        setUser(currentUser ?? null);
+        setAuthLoading(false);
+
+        if (!currentUser) {
+          router.replace('/auth');
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('Error validating auth:', error);
+        setUser(null);
+        setAuthLoading(false);
         router.replace('/auth');
-        return;
       }
-
-      setUser(user);
-      setAuthLoading(false);
     };
 
     validateAuth();
@@ -101,12 +108,13 @@ export default function Builder() {
       if (!isMounted) return;
 
       const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      setAuthLoading(false);
+
       if (!currentUser) {
         router.replace('/auth');
         return;
       }
-
-      setUser(currentUser);
     });
 
     return () => {
