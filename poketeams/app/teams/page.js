@@ -43,7 +43,7 @@ export default function Teams() {
 
     syncAuth();
 
-    const { data: authListener } = authService.onAuthStateChange((event, session) => {
+    const { data: authListener } = authService.onAuthStateChange(() => {
       void syncAuth();
     });
 
@@ -82,7 +82,28 @@ export default function Teams() {
     setSelectedTeam(null);
   };
 
-  const calculateEffectiveStats = (baseStats, level = 50, ivs = { hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 }, evs = { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 }) => {
+  const getTeamPokemonCount = (team) => team.team_pokemon.filter(Boolean).length;
+
+  const calculateEffectiveStats = (
+    baseStats,
+    level = 50,
+    ivs = {
+      hp: 31,
+      attack: 31,
+      defense: 31,
+      specialAttack: 31,
+      specialDefense: 31,
+      speed: 31
+    },
+    evs = {
+      hp: 0,
+      attack: 0,
+      defense: 0,
+      specialAttack: 0,
+      specialDefense: 0,
+      speed: 0
+    }
+  ) => {
     const effective = {};
     for (const stat in baseStats) {
       const base = baseStats[stat];
@@ -100,8 +121,16 @@ export default function Teams() {
   if (authLoading) {
     return (
       <div className={styles.container}>
-        <h1 className={styles.title}>Meus Times Salvos</h1>
-        <p>Verificando autenticacao...</p>
+        <BackToHome />
+        <div className={styles.pageShell}>
+          <header className={styles.pageHeader}>
+            <h1 className={styles.title}>Meus Times Salvos</h1>
+            <p className={styles.subtitle}>Gerencie e visualize seus times</p>
+          </header>
+          <div className={styles.statusCard}>
+            <p>Verificando autenticacao...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -109,8 +138,16 @@ export default function Teams() {
   if (loading) {
     return (
       <div className={styles.container}>
-        <h1 className={styles.title}>Meus Times Salvos</h1>
-        <p>Carregando times...</p>
+        <BackToHome />
+        <div className={styles.pageShell}>
+          <header className={styles.pageHeader}>
+            <h1 className={styles.title}>Meus Times Salvos</h1>
+            <p className={styles.subtitle}>Gerencie e visualize seus times</p>
+          </header>
+          <div className={styles.statusCard}>
+            <p>Carregando times...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -118,66 +155,96 @@ export default function Teams() {
   return (
     <div className={styles.container}>
       <BackToHome />
-      <h1 className={styles.title}>Meus Times Salvos</h1>
+      <div className={styles.pageShell}>
+        <header className={styles.pageHeader}>
+          <h1 className={styles.title}>Meus Times Salvos</h1>
+          <p className={styles.subtitle}>Gerencie e visualize seus times</p>
+        </header>
 
-      {savedTeams.length === 0 ? (
-        <div className={styles.emptyState}>
-          <p>Você ainda não salvou nenhum time.</p>
-          <button
-            onClick={() => router.push('/builder')}
-            className={styles.createButton}
-          >
-            Criar Primeiro Time
-          </button>
-        </div>
-      ) : (
-        <div className={styles.teamsGrid}>
-          {savedTeams.map((team) => (
-            <div key={team.id} className={styles.teamCard}>
-              <h3 className={styles.teamName}>{team.name}</h3>
-              <div className={styles.teamPreview}>
-                {team.team_pokemon.slice(0, 6).map((pokemon, index) => (
-                  <div key={index} className={styles.pokemonSlot}>
-                    {pokemon ? (
-                      <div className={styles.pokemonMini}>
-                        <img
-                          src={pokemon.image_url || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.pokemon_id}.png`}
-                          alt={pokemon.name}
-                          className={styles.pokemonImage}
-                        />
-                        <span className={styles.pokemonName}>{pokemon.name}</span>
-                      </div>
-                    ) : (
-                      <div className={styles.emptySlot}>Vazio</div>
-                    )}
-                  </div>
-                ))}
+        {savedTeams.length === 0 ? (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon} aria-hidden="true">{"\u26A1"}</span>
+            <p className={styles.emptyTitle}>Seu espaco de times esta vazio</p>
+            <p className={styles.emptyText}>
+              Monte seu primeiro time e volte aqui para acompanhar tudo em um painel completo.
+            </p>
+            <button
+              onClick={() => router.push('/builder')}
+              className={styles.createButton}
+            >
+              Criar Primeiro Time
+            </button>
+          </div>
+        ) : (
+          <div className={styles.teamsGrid}>
+            {savedTeams.map((team) => (
+              <div key={team.id} className={styles.teamCard}>
+                <div className={styles.teamTop}>
+                  <h3 className={styles.teamName}>{team.name}</h3>
+                  <span className={styles.teamCount}>{getTeamPokemonCount(team)}/6 Pokemon</span>
+                </div>
+
+                <div className={styles.teamDivider} />
+
+                <div className={styles.teamPreview}>
+                  {team.team_pokemon.slice(0, 6).map((pokemon, index) => (
+                    <div
+                      key={index}
+                      className={`${styles.pokemonSlot} ${pokemon ? styles.pokemonFilled : styles.pokemonEmpty}`}
+                      title={pokemon ? pokemon.name : 'Slot vazio'}
+                      data-name={pokemon ? pokemon.name : ''}
+                    >
+                      {pokemon ? (
+                        <div className={styles.pokemonMini}>
+                          <img
+                            src={pokemon.image_url || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.pokemon_id}.png`}
+                            alt={pokemon.name}
+                            className={styles.pokemonImage}
+                          />
+                          <span className={styles.pokemonName}>{pokemon.name}</span>
+                        </div>
+                      ) : (
+                        <div className={styles.emptySlot}>Vazio</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.teamActions}>
+                  <button
+                    onClick={() => handleViewTeam(team)}
+                    className={styles.viewButton}
+                  >
+                    Ver Detalhes
+                  </button>
+                  <button
+                    onClick={() => handleLoadTeam(team)}
+                    className={styles.loadButton}
+                  >
+                    Carregar para Editar
+                  </button>
+                </div>
               </div>
-              <div className={styles.teamActions}>
-                <button
-                  onClick={() => handleViewTeam(team)}
-                  className={styles.viewButton}
-                >
-                  Ver Detalhes
-                </button>
-                <button
-                  onClick={() => handleLoadTeam(team)}
-                  className={styles.loadButton}
-                >
-                  Carregar para Editar
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {selectedTeam && (
         <div className={styles.modalOverlay} onClick={handleCloseView}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2>{selectedTeam.name}</h2>
-              <button onClick={handleCloseView} className={styles.closeButton}>×</button>
+              <div className={styles.modalTitleGroup}>
+                <h2>{selectedTeam.name}</h2>
+                <p>{getTeamPokemonCount(selectedTeam)} de 6 Pokemon preenchidos</p>
+              </div>
+              <button
+                onClick={handleCloseView}
+                className={styles.closeButton}
+                aria-label="Fechar modal"
+              >
+                X
+              </button>
             </div>
 
             <div className={styles.teamDetails}>
@@ -190,10 +257,10 @@ export default function Teams() {
                         alt={pokemon.name}
                         className={styles.pokemonDetailImage}
                       />
-                      <div>
+                      <div className={styles.pokemonInfo}>
                         <h3>{pokemon.name}</h3>
                         {pokemon.nickname && <p>Apelido: {pokemon.nickname}</p>}
-                        <p>Nível: {pokemon.level}</p>
+                        <p>Nivel: {pokemon.level}</p>
                       </div>
                     </div>
 
@@ -211,6 +278,12 @@ export default function Teams() {
                             {Object.entries(effectiveStats).map(([stat, value]) => (
                               <div key={stat} className={styles.statItem}>
                                 <span className={styles.statName}>{stat.toUpperCase()}</span>
+                                <div className={styles.statBar}>
+                                  <span
+                                    className={styles.statFill}
+                                    style={{ width: `${Math.min((value / 255) * 100, 100)}%` }}
+                                  />
+                                </div>
                                 <span className={styles.statValue}>{value}</span>
                               </div>
                             ))}
@@ -230,12 +303,15 @@ export default function Teams() {
                       </div>
                     )}
 
-                    {pokemon.ability && (
-                      <p><strong>Habilidade:</strong> {pokemon.ability}</p>
-                    )}
-
-                    {pokemon.item && (
-                      <p><strong>Item:</strong> {pokemon.item}</p>
+                    {(pokemon.ability || pokemon.item) && (
+                      <div className={styles.pokemonMeta}>
+                        {pokemon.ability && (
+                          <p><strong>Habilidade:</strong> {pokemon.ability}</p>
+                        )}
+                        {pokemon.item && (
+                          <p><strong>Item:</strong> {pokemon.item}</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 )
