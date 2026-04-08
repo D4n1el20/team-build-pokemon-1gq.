@@ -9,7 +9,6 @@ const MODE = {
   LOGIN: 'login',
   SIGNUP: 'signup',
 };
-<h1>TESTE 123</h1>
 const MODE_CONFIG = {
   [MODE.LOGIN]: {
     title: 'Entrar',
@@ -202,7 +201,11 @@ export default function Auth() {
     setFieldErrors({});
     setTouched({});
     setSubmitAttempted(false);
-    setFormData((prev) => ({ ...prev, password: '', confirmPassword: '' }));
+    setFormData({
+      email: formData.email,
+      password: '',
+      confirmPassword: ''
+    });
   };
 
   const handleSubmit = async (event) => {

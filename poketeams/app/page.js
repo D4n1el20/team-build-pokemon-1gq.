@@ -8,7 +8,6 @@ import styles from './page.module.css';
 
 export default function Home() {
   const [user, setUser] = useState(null);
-  const [username, setUsername] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
@@ -20,18 +19,6 @@ export default function Home() {
       } = await authService.getCurrentUser();
 
       setUser(user ?? null);
-
-      if (user?.id) {
-        try {
-          const profile = await authService.getUserProfile(user.id);
-          setUsername(profile?.username || null);
-        } catch (error) {
-          setUsername(null);
-        }
-      } else {
-        setUsername(null);
-      }
-
       setAuthLoading(false);
     };
 
@@ -74,7 +61,7 @@ export default function Home() {
             aria-haspopup={user ? 'menu' : undefined}
             aria-expanded={user ? menuOpen : undefined}
           >
-            {authLoading ? 'Carregando...' : username || user?.email || 'Login'}
+            {authLoading ? 'Carregando...' : user?.email || 'Login'}
           </button>
 
           {user && menuOpen && (

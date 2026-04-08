@@ -4,10 +4,6 @@ function normalizeEmail(value) {
   return value?.trim().toLowerCase()
 }
 
-function normalizeUsername(value) {
-  return value?.trim()
-}
-
 function mapAuthErrorMessage(error, fallback = 'Nao foi possivel autenticar. Tente novamente.') {
   const message = error?.message?.toLowerCase?.() || ''
 
@@ -27,20 +23,10 @@ function isInvalidJwtUserError(error) {
   return message.includes('user from sub claim in jwt does not exist')
 }
 
-function isProfilesTableMissingError(error) {
-  const message = error?.message?.toLowerCase?.() || ''
-  return message.includes("could not find the table 'public.profiles' in the schema cache")
-}
-
 export const authService = {
   // Sign up
-  async signUp(email, password, username) {
+  async signUp(email, password) {
     const normalizedEmail = normalizeEmail(email)
-    const normalizedUsername = normalizeUsername(username)
-
-    if (!normalizedUsername || normalizedUsername.length < 3) {
-      throw new Error('Username deve ter no minimo 3 caracteres')
-    }
 
     if (!normalizedEmail) {
       throw new Error('Email invalido.')
@@ -48,103 +34,24 @@ export const authService = {
 
     const { data, error } = await supabase.auth.signUp({
       email: normalizedEmail,
-      password,
-      options: {
-        data: {
-          username: normalizedUsername
-        }
-      }
+      password
     })
 
     if (error) throw error
-
-    const user = data?.user
-    if (!user?.id) {
-      throw new Error('Conta criada, mas nao foi possivel identificar o usuario para salvar o perfil.')
-    }
-
-    const { data: sessionData } = await supabase.auth.getSession()
-    const authUid = sessionData?.session?.user?.id ?? null
-
-    // Debug para validar se auth.uid() deve bater com user.id no insert com RLS.
-    console.debug('SignUp profile insert debug:', {
-      authUid,
-      userId: user.id,
-      uidMatches: authUid === user.id
-    })
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert(
-        {
-          id: user.id,
-          username: normalizedUsername,
-          email: normalizedEmail
-        },
-        { returning: 'minimal' }
-      )
-
-    if (profileError) {
-      console.error('Error inserting profile after signUp:', profileError, {
-        authUid,
-        userId: user.id,
-        profileErrorCode: profileError?.code,
-        profileErrorMessage: profileError?.message,
-        profileErrorDetails: profileError?.details
-      })
-
-      if (profileError.code === '23505') {
-        throw new Error('Esse username ja esta em uso')
-      }
-
-      if (isProfilesTableMissingError(profileError)) {
-        throw new Error("Tabela public.profiles nao encontrada. Rode a migration de profiles no Supabase.")
-      }
-
-      throw new Error(profileError.message || 'Conta criada, mas nao foi possivel salvar o perfil.')
-    }
 
     return data
   },
 
   // Sign in
-  async signIn(login, password) {
-    const normalizedLogin = login?.trim()
+  async signIn(email, password) {
+    const normalizedEmail = normalizeEmail(email)
 
-    if (!normalizedLogin) {
-      throw new Error('Informe email ou username.')
-    }
-
-    const isEmailLogin = normalizedLogin.includes('@')
-    let resolvedEmail = normalizeEmail(normalizedLogin)
-
-    if (!isEmailLogin) {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('username', normalizedLogin)
-        .single()
-
-      if (profileError) {
-        if (isProfilesTableMissingError(profileError)) {
-          throw new Error("Tabela public.profiles nao encontrada. Rode a migration de profiles no Supabase.")
-        }
-
-        if (profileError.code === 'PGRST116') {
-          throw new Error('Usuario nao encontrado')
-        }
-        throw new Error('Erro ao buscar usuario. Tente novamente.')
-      }
-
-      if (!profile.email) {
-        throw new Error('Perfil sem email vinculado. Atualize a tabela profiles com o campo email.')
-      }
-
-      resolvedEmail = normalizeEmail(profile.email)
+    if (!normalizedEmail) {
+      throw new Error('Informe seu email.')
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: resolvedEmail,
+      email: normalizedEmail,
       password
     })
 
@@ -180,20 +87,6 @@ export const authService = {
     }
 
     return response
-  },
-
-  // Get user profile
-  async getUserProfile(userId) {
-    if (!userId) return null
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', userId)
-      .maybeSingle()
-
-    if (error) throw error
-    return data
   },
 
   // Listen to auth state changes
