@@ -1,5 +1,70 @@
 import { supabase } from './supabase'
 
+const DEFAULT_LEVEL = 50
+const DEFAULT_IVS = Object.freeze({
+  hp: 31,
+  attack: 31,
+  defense: 31,
+  specialAttack: 31,
+  specialDefense: 31,
+  speed: 31
+})
+const DEFAULT_EVS = Object.freeze({
+  hp: 0,
+  attack: 0,
+  defense: 0,
+  specialAttack: 0,
+  specialDefense: 0,
+  speed: 0
+})
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+
+const toNumber = (value, fallback) => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function normalizeMoves(moves) {
+  const source = Array.isArray(moves) ? moves : []
+  return Array.from({ length: 4 }, (_, index) => {
+    const move = source[index]
+    return typeof move === 'string' ? move : ''
+  })
+}
+
+function normalizeStatSpread(spread, defaults, min, max) {
+  const source = spread && typeof spread === 'object' ? spread : {}
+
+  return {
+    hp: clamp(toNumber(source.hp, defaults.hp), min, max),
+    attack: clamp(toNumber(source.attack ?? source.atk, defaults.attack), min, max),
+    defense: clamp(toNumber(source.defense ?? source.def, defaults.defense), min, max),
+    specialAttack: clamp(
+      toNumber(source.specialAttack ?? source.spAtk ?? source.spa, defaults.specialAttack),
+      min,
+      max
+    ),
+    specialDefense: clamp(
+      toNumber(source.specialDefense ?? source.spDef ?? source.spd, defaults.specialDefense),
+      min,
+      max
+    ),
+    speed: clamp(toNumber(source.speed ?? source.spe, defaults.speed), min, max)
+  }
+}
+
+function normalizePokemonConfig(pokemon = {}) {
+  return {
+    level: clamp(toNumber(pokemon.level, DEFAULT_LEVEL), 1, 100),
+    ivs: normalizeStatSpread(pokemon.ivs, DEFAULT_IVS, 0, 31),
+    evs: normalizeStatSpread(pokemon.evs, DEFAULT_EVS, 0, 255),
+    moves: normalizeMoves(pokemon.moves),
+    ability: typeof pokemon.ability === 'string' ? pokemon.ability : '',
+    item: typeof pokemon.item === 'string' ? pokemon.item : ''
+  }
+}
+
 async function getRequiredUser() {
   const {
     data: { user },
@@ -13,20 +78,22 @@ async function getRequiredUser() {
 }
 
 function mapPokemonInsert(teamId, pokemon) {
+  const normalizedConfig = normalizePokemonConfig(pokemon)
+
   return {
     team_id: teamId,
     pokemon_id: pokemon.id,
-    nickname: pokemon.nickname || null,
-    level: pokemon.level || 50,
-    ivs: pokemon.ivs || { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
-    evs: pokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
-    moves: pokemon.moves || [],
-    ability: pokemon.ability || null,
-    item: pokemon.item || null,
+    nickname: pokemon.nickname ?? null,
+    level: normalizedConfig.level,
+    ivs: normalizedConfig.ivs,
+    evs: normalizedConfig.evs,
+    moves: normalizedConfig.moves,
+    ability: normalizedConfig.ability,
+    item: normalizedConfig.item,
     name: pokemon.name,
-    types: pokemon.types,
-    base_stats: pokemon.stats,
-    image_url: pokemon.image
+    types: Array.isArray(pokemon.types) ? pokemon.types : [],
+    base_stats: pokemon.stats && typeof pokemon.stats === 'object' ? pokemon.stats : null,
+    image_url: pokemon.image ?? null
   }
 }
 
@@ -97,7 +164,18 @@ export const teamService = {
 
     return (data || []).map((team) => ({
       ...team,
-      team_pokemon: (team.team_pokemon || []).filter(Boolean)
+      team_pokemon: (team.team_pokemon || []).filter(Boolean).map((pokemon) => {
+        const normalizedConfig = normalizePokemonConfig(pokemon)
+        return {
+          ...pokemon,
+          level: normalizedConfig.level,
+          ivs: normalizedConfig.ivs,
+          evs: normalizedConfig.evs,
+          moves: normalizedConfig.moves,
+          ability: normalizedConfig.ability,
+          item: normalizedConfig.item
+        }
+      })
     }))
   },
 

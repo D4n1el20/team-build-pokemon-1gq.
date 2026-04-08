@@ -21,6 +21,8 @@ export default function PokemonDetails({
   item,
   ivs,
   evs,
+  movesList,
+  abilitiesList,
   itemsList,
   onLevelChange,
   onMoveChange,
@@ -34,7 +36,7 @@ export default function PokemonDetails({
 }) {
   if (!selectedPokemon) return null;
 
-  const effective = calculateEffectiveStats(selectedPokemon.stats);
+  const effective = calculateEffectiveStats(selectedPokemon);
   const totalEvs = Object.values(evs).reduce((sum, ev) => sum + ev, 0);
 
   return (
@@ -80,28 +82,56 @@ export default function PokemonDetails({
           <h4>Golpes</h4>
           <div className={styles.movesGrid}>
             {Array(4).fill().map((_, i) => (
-              <select key={i} value={moves[i] || ''} onChange={(e) => onMoveChange(i, e.target.value)} className={styles.control}>
-                <option value="">Selecionar</option>
-                {selectedPokemon.moves.map(move => <option key={move} value={move}>{move}</option>)}
-              </select>
+              <input
+                key={i}
+                type="text"
+                value={moves[i] || ''}
+                onChange={(e) => onMoveChange(i, e.target.value)}
+                placeholder={`Golpe ${i + 1}`}
+                list="pokemon-moves-list"
+                className={styles.control}
+              />
             ))}
           </div>
+          <datalist id="pokemon-moves-list">
+            {movesList.map((move) => (
+              <option key={move} value={move} />
+            ))}
+          </datalist>
         </div>
 
         <div className={`${styles.formCard} ${styles.abilitySection}`}>
           <h4>Habilidade</h4>
-          <select value={ability} onChange={(e) => onAbilityChange(e.target.value)} className={styles.control}>
-            <option value="">Selecionar</option>
-            {selectedPokemon.abilities.map(abil => <option key={abil} value={abil}>{abil}</option>)}
-          </select>
+          <input
+            type="text"
+            value={ability || ''}
+            onChange={(e) => onAbilityChange(e.target.value)}
+            placeholder="Digite a habilidade"
+            list="pokemon-abilities-list"
+            className={styles.control}
+          />
+          <datalist id="pokemon-abilities-list">
+            {abilitiesList.map((abilityName) => (
+              <option key={abilityName} value={abilityName} />
+            ))}
+          </datalist>
         </div>
 
         <div className={`${styles.formCard} ${styles.itemSection}`}>
           <h4>Item Hold</h4>
-          <select value={item} onChange={(e) => onItemChange(e.target.value)} className={styles.control}>
-            <option value="">Selecionar</option>
-            {itemsList.map(it => <option key={it} value={it}>{it}</option>)}
-          </select>
+          <input
+            type="text"
+            value={item || ''}
+            onChange={(e) => onItemChange(e.target.value)}
+            placeholder="Digite o item"
+            list="pokemon-items-list"
+            className={styles.control}
+          />
+          <datalist id="pokemon-items-list">
+            {itemsList.map((itemName) => (
+              <option key={itemName} value={itemName} />
+            ))}
+          </datalist>
         </div>
 
         <div className={`${styles.formCard} ${styles.levelSection}`}>
