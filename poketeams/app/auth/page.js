@@ -150,7 +150,7 @@ export default function Auth() {
       if (!isMounted) return;
 
       if (user) {
-        router.replace('/builder');
+        router.replace('/');
         return;
       }
 
@@ -163,7 +163,7 @@ export default function Auth() {
       if (!isMounted) return;
 
       if (session?.user) {
-        router.replace('/builder');
+        router.replace('/');
         return;
       }
 
@@ -230,7 +230,7 @@ export default function Auth() {
 
     try {
       await action(email.trim(), password, username.trim());
-      router.push('/builder');
+      router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nao foi possivel autenticar. Tente novamente.');
     } finally {

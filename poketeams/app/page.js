@@ -76,7 +76,7 @@ export default function Home() {
         </div>
       </div>
 
-      <p className={styles.greeting}>Ola, {displayName}</p>
+      <p className={styles.greeting}>Olá, {displayName}</p>
       <h1 className={styles.title}>Times de Pokemon</h1>
       <p className={styles.description}>
         Bem-vindo ao construtor de times de Pokemon. Monte equipes equilibradas para batalhas epicas.
