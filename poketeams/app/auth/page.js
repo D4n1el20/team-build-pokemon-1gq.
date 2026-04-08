@@ -28,19 +28,12 @@ const MODE_CONFIG = {
 };
 
 const MIN_PASSWORD_LENGTH = 6;
-const MIN_USERNAME_LENGTH = 3;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getFieldError(field, value, formData, mode) {
   const trimmedEmail = formData.email.trim();
-  const trimmedUsername = formData.username.trim();
 
   if (field === 'email') {
-    if (mode === MODE.LOGIN) {
-      if (!trimmedEmail) return 'Informe seu email ou usuario.';
-      return '';
-    }
-
     if (!trimmedEmail) return 'Informe seu email.';
     if (!EMAIL_REGEX.test(trimmedEmail)) return 'Informe um email valido.';
     return '';
@@ -60,20 +53,12 @@ function getFieldError(field, value, formData, mode) {
     return '';
   }
 
-  if (field === 'username' && mode === MODE.SIGNUP) {
-    if (!trimmedUsername) return 'Informe seu username.';
-    if (trimmedUsername.length < MIN_USERNAME_LENGTH) {
-      return `Username deve ter no minimo ${MIN_USERNAME_LENGTH} caracteres.`;
-    }
-    return '';
-  }
-
   return '';
 }
 
 function validateForm(formData, mode) {
   const fields = ['email', 'password'];
-  if (mode === MODE.SIGNUP) fields.push('username', 'confirmPassword');
+  if (mode === MODE.SIGNUP) fields.push('confirmPassword');
 
   return fields.reduce((acc, field) => {
     const message = getFieldError(field, formData[field], formData, mode);
@@ -129,7 +114,7 @@ function AuthField({
 
 export default function Auth() {
   const [mode, setMode] = useState(MODE.LOGIN);
-  const [formData, setFormData] = useState({ email: '', username: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '' });
   const [fieldErrors, setFieldErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -139,7 +124,7 @@ export default function Auth() {
   const router = useRouter();
 
   const { title, submitLabel, loadingLabel, switchLabel, action } = MODE_CONFIG[mode];
-  const { email, username, password, confirmPassword } = formData;
+  const { email, password, confirmPassword } = formData;
   const isSignup = mode === MODE.SIGNUP;
 
   const shouldShowFieldError = (field) => submitAttempted || touched[field];
@@ -147,31 +132,32 @@ export default function Auth() {
   useEffect(() => {
     let isMounted = true;
 
-    const syncSession = async () => {
-      try {
-        const {
-          data: { user }
-        } = await authService.getCurrentUser();
+    const checkSession = async () => {
+      const {
+        data: { user }
+      } = await authService.getCurrentUser();
 
-        if (!isMounted) return;
+      if (!isMounted) return;
 
-        if (user) {
-          router.replace('/builder');
-          return;
-        }
-
-        setSessionLoading(false);
-      } catch (error) {
-        if (!isMounted) return;
-        console.error('Error checking session:', error);
-        setSessionLoading(false);
+      if (user) {
+        router.replace('/builder');
+        return;
       }
+
+      setSessionLoading(false);
     };
 
-    syncSession();
+    checkSession();
 
     const { data: authListener } = authService.onAuthStateChange((event, session) => {
-      void syncSession();
+      if (!isMounted) return;
+
+      if (session?.user) {
+        router.replace('/builder');
+        return;
+      }
+
+      setSessionLoading(false);
     });
 
     return () => {
@@ -216,7 +202,7 @@ export default function Auth() {
     setFieldErrors({});
     setTouched({});
     setSubmitAttempted(false);
-    setFormData((prev) => ({ ...prev, username: '', password: '', confirmPassword: '' }));
+    setFormData((prev) => ({ ...prev, password: '', confirmPassword: '' }));
   };
 
   const handleSubmit = async (event) => {
@@ -233,11 +219,7 @@ export default function Auth() {
     setError('');
 
     try {
-      if (isSignup) {
-        await action(email.trim(), password, username.trim());
-      } else {
-        await action(email.trim(), password);
-      }
+      await action(email.trim(), password);
       router.push('/builder');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nao foi possivel autenticar. Tente novamente.');
@@ -264,13 +246,13 @@ export default function Auth() {
         <form onSubmit={handleSubmit} className={styles.form}>
           <AuthField
             id="email"
-            label={mode === MODE.LOGIN ? 'Email ou usuario' : 'Email'}
-            type={mode === MODE.LOGIN ? 'text' : 'email'}
+            label="Email"
+            type="email"
             value={email}
             onChange={handleInputChange('email')}
             onBlur={handleBlur('email')}
             disabled={loading}
-            autoComplete={mode === MODE.LOGIN ? 'username' : 'email'}
+            autoComplete="email"
             error={getVisibleFieldError('email')}
             showState={shouldShowFieldError('email')}
           />
@@ -287,21 +269,6 @@ export default function Auth() {
             error={getVisibleFieldError('password')}
             showState={shouldShowFieldError('password')}
           />
-
-          {isSignup && (
-            <AuthField
-              id="username"
-              label="Username"
-              type="text"
-              value={username}
-              onChange={handleInputChange('username')}
-              onBlur={handleBlur('username')}
-              disabled={loading}
-              autoComplete="username"
-              error={getVisibleFieldError('username')}
-              showState={shouldShowFieldError('username')}
-            />
-          )}
 
           {isSignup && (
             <AuthField
