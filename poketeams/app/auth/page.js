@@ -9,7 +9,7 @@ const MODE = {
   LOGIN: 'login',
   SIGNUP: 'signup',
 };
-
+<h1>TESTE 123</h1>
 const MODE_CONFIG = {
   [MODE.LOGIN]: {
     title: 'Entrar',
