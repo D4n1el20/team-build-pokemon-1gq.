@@ -69,7 +69,7 @@ export default function Builder() {
 
       setTeam(loadedTeam);
       setTeamName(savedTeam.name);
-      alert('Time carregado com sucesso para ediÃ§Ã£o!');
+      alert('Time carregado com sucesso para edicao!');
     } catch (error) {
       console.error('Error loading team from data:', error);
       alert('Erro ao carregar o time.');
@@ -156,7 +156,7 @@ export default function Builder() {
         try {
           const loadedTeam = JSON.parse(loadedTeamData);
           loadTeamFromData(loadedTeam);
-          localStorage.removeItem('loaded_team'); // Limpar após carregar
+          localStorage.removeItem('loaded_team'); // Limpar apos carregar
         } catch (error) {
           console.error('Error loading team from localStorage:', error);
         }
@@ -362,7 +362,7 @@ export default function Builder() {
             };
           } catch (error) {
             console.error(`Error loading Pokemon ${tp.pokemon_id}:`, error);
-            // Fallback com dados básicos
+            // Fallback com dados basicos
             loadedTeam[i] = {
               id: tp.pokemon_id,
               name: `Pokemon ${tp.pokemon_id}`,
@@ -415,7 +415,8 @@ export default function Builder() {
   return (
     <div className={styles.container}>
       <BackToHome />
-      <div className={styles.teamSection}>
+
+      <section className={`${styles.panel} ${styles.teamSection}`}>
         <h1 className={styles.title}>Construtor de Times</h1>
         <div className={styles.saveSection}>
           <input
@@ -425,77 +426,89 @@ export default function Builder() {
             placeholder="Nome do Time"
             className={styles.teamNameInput}
           />
-          <button onClick={saveTeam} className={styles.saveButton}>Salvar Time</button>
+          <button onClick={saveTeam} className={`${styles.button} ${styles.primaryButton} ${styles.saveButton}`}>Salvar Time</button>
         </div>
+
         <div className={styles.teamSlots}>
           {team.map((pokemon, index) => (
             <div
               key={index}
               onClick={() => handleSlotClick(index)}
-              className={`${styles.slot} ${pokemon ? styles.slotFilled : ''}`}
+              className={`${styles.slot} ${pokemon ? styles.slotFilled : ''} ${selectedSlot === index ? styles.slotActive : ''}`}
             >
               {pokemon ? (
-                <img src={pokemon.image} alt={pokemon.name} className={styles.slotImage} />
+                <>
+                  <img src={pokemon.image} alt={pokemon.name} className={styles.slotImage} />
+                  <span className={styles.slotName}>{pokemon.name}</span>
+                </>
               ) : (
-                '+'
+                <>
+                  <span className={styles.slotPlus}>+</span>
+                  <span className={styles.slotEmptyText}>Adicionar</span>
+                </>
               )}
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {selectedSlot !== null && (
-        <div className={styles.selectionSection}>
-          {!selectedPokemon ? (
-            <PokemonSearch
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              filteredPokemon={filteredPokemon}
-              selectedPokemon={selectedPokemon}
-              onPokemonSelect={handlePokemonSelect}
-            />
-          ) : (
-            <PokemonDetails
-              selectedPokemon={selectedPokemon}
-              level={level}
-              moves={moves}
-              ability={ability}
-              item={item}
-              ivs={ivs}
-              evs={evs}
-              itemsList={itemsList}
-              onLevelChange={handleLevelChange}
-              onMoveChange={handleMoveChange}
-              onAbilityChange={handleAbilityChange}
-              onItemChange={handleItemChange}
-              onIvChange={handleIvChange}
-              onEvChange={handleEvChange}
-              calculateEffectiveStats={calculateEffectiveStats}
-              onClearPokemon={handleClearPokemon}
-              onChangePokemon={handleChangePokemon}
-            />
-          )}
-        </div>
-      )}
+      <section className={`${styles.panel} ${styles.selectionSection}`}>
+        {selectedSlot === null ? (
+          <div className={styles.selectionPlaceholder}>
+            <h2>Configuracao do Pokemon</h2>
+            <p>Selecione um slot do time para iniciar a configuracao.</p>
+          </div>
+        ) : !selectedPokemon ? (
+          <PokemonSearch
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            filteredPokemon={filteredPokemon}
+            selectedPokemon={selectedPokemon}
+            onPokemonSelect={handlePokemonSelect}
+          />
+        ) : (
+          <PokemonDetails
+            selectedPokemon={selectedPokemon}
+            level={level}
+            moves={moves}
+            ability={ability}
+            item={item}
+            ivs={ivs}
+            evs={evs}
+            itemsList={itemsList}
+            onLevelChange={handleLevelChange}
+            onMoveChange={handleMoveChange}
+            onAbilityChange={handleAbilityChange}
+            onItemChange={handleItemChange}
+            onIvChange={handleIvChange}
+            onEvChange={handleEvChange}
+            calculateEffectiveStats={calculateEffectiveStats}
+            onClearPokemon={handleClearPokemon}
+            onChangePokemon={handleChangePokemon}
+          />
+        )}
+      </section>
 
-      <div className={styles.analysisSection}>
-        <h2>Análise do Time</h2>
-        <p>Total de Pokémon: {team.filter(p => p).length}</p>
-      </div>
+      <aside className={styles.rightColumn}>
+        <section className={`${styles.panel} ${styles.analysisSection}`}>
+          <h2>Analise do Time</h2>
+          <p>Total de Pokemon: {team.filter(p => p).length}</p>
+        </section>
 
-      {savedTeams.length > 0 && (
-        <div className={styles.savedTeamsSection}>
-          <h2>Times Salvos</h2>
-          <ul className={styles.savedTeamsList}>
-            {savedTeams.map((savedTeam) => (
-              <li key={savedTeam.id} className={styles.savedTeamItem}>
-                <span>{savedTeam.name}</span>
-                <button onClick={() => loadTeam(savedTeam)} className={styles.loadButton}>Carregar</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        {savedTeams.length > 0 && (
+          <section className={`${styles.panel} ${styles.savedTeamsSection}`}>
+            <h2>Times Salvos</h2>
+            <ul className={styles.savedTeamsList}>
+              {savedTeams.map((savedTeam) => (
+                <li key={savedTeam.id} className={styles.savedTeamItem}>
+                  <span>{savedTeam.name}</span>
+                  <button onClick={() => loadTeam(savedTeam)} className={`${styles.button} ${styles.secondaryButton} ${styles.loadButton}`}>Carregar</button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </aside>
     </div>
   );
 }
