@@ -169,10 +169,8 @@ export default function Builder() {
       setSelectedSlot(null);
       setSelectedPokemon(null);
       setSearchTerm('');
-      alert('Time carregado com sucesso para edicao!');
     } catch (error) {
       console.error('Error loading team from data:', error);
-      alert('Erro ao carregar o time.');
     }
   }, [enrichStoredPokemon]);
 
@@ -231,9 +229,34 @@ export default function Builder() {
         const abilitiesData = await abilitiesRes.json();
         setAbilitiesList(abilitiesData.results.map((abilityData) => abilityData.name));
 
-        const itemsRes = await fetch('https://pokeapi.co/api/v2/item-category/1');
-        const itemsData = await itemsRes.json();
-        setItemsList(itemsData.items.slice(0, 100).map((itemData) => itemData.name));
+        const itemCategories = [2, 3, 4, 5, 6, 9, 10];
+        const allItems = new Set();
+        
+        for (const categoryId of itemCategories) {
+          try {
+            const categoryRes = await fetch(`https://pokeapi.co/api/v2/item-category/${categoryId}`);
+            const categoryData = await categoryRes.json();
+            if (categoryData.items) {
+              categoryData.items.forEach((item) => {
+                allItems.add(item.name);
+              });
+            }
+          } catch (error) {
+            console.error(`Error fetching item category ${categoryId}:`, error);
+          }
+        }
+        
+        const genericItems = Array.from(allItems).filter((itemName) => {
+          const lowerName = itemName.toLowerCase();
+          const exclusivePatterns = [
+            'z-crystal', '-z', 'box', 'pokedex', 'poke-ball', 
+            'ancient-feathers', 'birthday-cupcake', 'ice-type-dragon', 
+            'secret-blob', 'glass-wing', 'odd-potion', 'secret-sauce'
+          ];
+          return !exclusivePatterns.some(pattern => lowerName.includes(pattern));
+        });
+        
+        setItemsList(genericItems);
 
         setLoading(false);
       } catch (error) {
@@ -500,17 +523,14 @@ export default function Builder() {
 
       if (editingTeamId !== null) {
         await teamService.updateTeam(editingTeamId, teamName, normalizedPokemonList);
-        alert('Time atualizado com sucesso!');
       } else {
         const createdTeam = await teamService.createTeam(teamName, normalizedPokemonList);
         setEditingTeamId(createdTeam.id);
-        alert('Time criado com sucesso!');
       }
 
       await loadSavedTeams();
     } catch (error) {
       console.error('Error saving team:', error);
-      alert('Erro ao salvar o time.');
     }
   };
 
@@ -568,8 +588,10 @@ export default function Builder() {
             placeholder="Nome do Time"
             className={styles.teamNameInput}
           />
-          <button onClick={saveTeam} className={`${styles.button} ${styles.primaryButton} ${styles.saveButton}`}>Salvar Time</button>
-          <button onClick={handleNewTeam} className={`${styles.button} ${styles.secondaryButton}`}>Novo Time</button>
+          <div className={styles.buttonRow}>
+            <button onClick={saveTeam} className={`${styles.button} ${styles.primaryButton} ${styles.saveButton}`}>Salvar Time</button>
+            <button onClick={handleNewTeam} className={`${styles.button} ${styles.secondaryButton}`}>Novo Time</button>
+          </div>
         </div>
 
         <div className={styles.teamSlots}>
@@ -622,8 +644,8 @@ export default function Builder() {
             item={selectedConfig?.item ?? ''}
             ivs={selectedConfig?.ivs ?? { ...DEFAULT_IVS }}
             evs={selectedConfig?.evs ?? { ...DEFAULT_EVS }}
-            movesList={movesList}
-            abilitiesList={abilitiesList}
+            movesList={selectedPokemon?.availableMoves ?? []}
+            abilitiesList={selectedPokemon?.abilities ?? []}
             itemsList={itemsList}
             onLevelChange={handleLevelChange}
             onMoveChange={(moveIndex, value) => {

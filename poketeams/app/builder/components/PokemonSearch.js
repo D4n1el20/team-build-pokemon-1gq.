@@ -1,4 +1,4 @@
-import styles from '../page.module.css';
+import styles from './PokemonSearch.module.css';
 
 export default function PokemonSearch({ searchTerm, onSearchChange, filteredPokemon, selectedPokemon, onPokemonSelect }) {
   return (

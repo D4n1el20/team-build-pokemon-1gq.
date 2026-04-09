@@ -1,11 +1,11 @@
-import styles from '../page.module.css';
+import styles from './PokemonDetails.module.css';
 
 const statLabels = {
   hp: 'HP',
   attack: 'Ataque',
   defense: 'Defesa',
-  specialAttack: 'Ataque Especial',
-  specialDefense: 'Defesa Especial',
+  specialAttack: 'Ataque E',
+  specialDefense: 'Defesa E',
   speed: 'Velocidade'
 };
 
@@ -55,7 +55,15 @@ export default function PokemonDetails({
       <div className={styles.detailsGrid}>
         <div className={styles.pokemonVisualCard}>
           <img src={selectedPokemon.image} alt={selectedPokemon.name} className={styles.pokemonImageLarge} />
-          <span className={styles.levelChip}>Lv. {level}</span>
+          <span className={styles.label}>Nível</span>
+          <input
+            type="number"
+            value={level}
+            onChange={(e) => onLevelChange(parseInt(e.target.value) || 50)}
+            min="1"
+            max="100"
+            className={styles.levelInput}
+          />
         </div>
 
         <div className={styles.statsPanel}>
@@ -82,72 +90,57 @@ export default function PokemonDetails({
           <h4>Golpes</h4>
           <div className={styles.movesGrid}>
             {Array(4).fill().map((_, i) => (
-              <input
+              <select
                 key={i}
-                type="text"
                 value={moves[i] || ''}
                 onChange={(e) => onMoveChange(i, e.target.value)}
-                placeholder={`Golpe ${i + 1}`}
-                list="pokemon-moves-list"
                 className={styles.control}
-              />
+              >
+                <option value="">Selecione um golpe</option>
+                {movesList.map((move) => (
+                  <option key={move} value={move}>
+                    {move}
+                  </option>
+                ))}
+              </select>
             ))}
           </div>
-          <datalist id="pokemon-moves-list">
-            {movesList.map((move) => (
-              <option key={move} value={move} />
-            ))}
-          </datalist>
         </div>
 
         <div className={`${styles.formCard} ${styles.abilitySection}`}>
           <h4>Habilidade</h4>
-          <input
-            type="text"
+          <select
             value={ability || ''}
             onChange={(e) => onAbilityChange(e.target.value)}
-            placeholder="Digite a habilidade"
-            list="pokemon-abilities-list"
             className={styles.control}
-          />
-          <datalist id="pokemon-abilities-list">
+          >
+            <option value="">Selecione uma habilidade</option>
             {abilitiesList.map((abilityName) => (
-              <option key={abilityName} value={abilityName} />
+              <option key={abilityName} value={abilityName}>
+                {abilityName}
+              </option>
             ))}
-          </datalist>
+          </select>
         </div>
 
         <div className={`${styles.formCard} ${styles.itemSection}`}>
           <h4>Item Hold</h4>
-          <input
-            type="text"
+          <select
             value={item || ''}
             onChange={(e) => onItemChange(e.target.value)}
-            placeholder="Digite o item"
-            list="pokemon-items-list"
             className={styles.control}
-          />
-          <datalist id="pokemon-items-list">
+          >
+            <option value="">Selecione um item</option>
             {itemsList.map((itemName) => (
-              <option key={itemName} value={itemName} />
+              <option key={itemName} value={itemName}>
+                {itemName}
+              </option>
             ))}
-          </datalist>
-        </div>
-
-        <div className={`${styles.formCard} ${styles.levelSection}`}>
-          <h4>Nivel</h4>
-          <input
-            type="number"
-            value={level}
-            onChange={(e) => onLevelChange(parseInt(e.target.value) || 50)}
-            min="1"
-            max="100"
-            className={styles.input}
-          />
+          </select>
         </div>
 
         <div className={`${styles.formCard} ${styles.ivsSection}`}>
-          <h4>IVs (0-31)</h4>
+          <h4>IVs</h4>
           <div className={styles.statInputsGrid}>
             {Object.keys(ivs).map(stat => (
               <div key={stat} className={styles.statInputRow}>
@@ -166,7 +159,7 @@ export default function PokemonDetails({
         </div>
 
         <div className={`${styles.formCard} ${styles.evsSection}`}>
-          <h4>EVs (0-255, total max 510)</h4>
+          <h4>EVs</h4>
           <div className={styles.statInputsGrid}>
             {Object.keys(evs).map(stat => (
               <div key={stat} className={styles.statInputRow}>
