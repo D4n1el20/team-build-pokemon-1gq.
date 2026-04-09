@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Times",
+  title: "Times de Pokemon",
   description: "Site para montar times de Pokemon",
 };
 
